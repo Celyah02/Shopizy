@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, FlatList, Alert, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import { useCart } from '../../contexts/CartContext';
+import { useRouter } from 'expo-router';
+import { api } from '../../utils/api';
+import { useFocusEffect } from '@react-navigation/native';
 
 type Product = {
   name: string;
@@ -9,23 +12,8 @@ type Product = {
 };
 
 const HomeScreen = () => {
-  const [products] = useState<Product[]>([
-    { name: 'Product 1', price: '$10.00', delivery: 'Free Delivery' },
-    { name: 'Product 2', price: '$15.00', delivery: 'Free Delivery' },
-    { name: 'Product 3', price: '$20.00', delivery: 'Fast Delivery' },
-    { name: 'Product 4', price: '$30.00', delivery: 'Free Delivery' },
-    { name: 'Product 5', price: '$50.00', delivery: 'Fast Delivery' },
-    { name: 'Product 6', price: '$100.00', delivery: 'Free Delivery' },
-    { name: 'Product 7', price: '$158.00', delivery: 'Free Delivery' },
-    { name: 'Product 8', price: '$202.00', delivery: 'Fast Delivery' },
-    { name: 'Product 9', price: '$309.00', delivery: 'Free Delivery' },
-    { name: 'Product 10', price: '$150.00', delivery: 'Fast Delivery' },
-    { name: 'Product 11', price: '$180.00', delivery: 'Free Delivery' },
-    { name: 'Product 12', price: '$158.00', delivery: 'Free Delivery' },
-    { name: 'Product 13', price: '$200.00', delivery: 'Fast Delivery' },
-    { name: 'Product 14', price: '$300.00', delivery: 'Free Delivery' },
-    { name: 'Product 15', price: '$500.00', delivery: 'Fast Delivery' },
-  ]);
+  const router = useRouter();
+  const [products, setProducts] = useState<{ id: number; name: string; description: string }[]>([]);
 
   const { cart, addToCart, isCartVisible, setIsCartVisible } = useCart();
 
@@ -34,29 +22,50 @@ const HomeScreen = () => {
     Alert.alert('Added to Cart', `${item.name} has been added to your cart!`);
   };
 
-  const renderItem = ({ item }: { item: Product }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <View style={styles.productCard}>
       <Text style={styles.rowText}>{item.name}</Text>
-      <Text style={styles.priceText}>{item.price}</Text>
-      <Text style={styles.deliveryText}>{item.delivery}</Text>
+      <Text style={styles.deliveryText}>{item.description}</Text>
       <TouchableOpacity style={styles.button} onPress={() => handlePress(item)}>
         <Text style={styles.buttonText}>Add to Cart</Text>
       </TouchableOpacity>
     </View>
   );
 
-  const renderHorizontalItem = ({ item }: { item: Product }) => (
+  const renderHorizontalItem = ({ item }: { item: any }) => (
     <View style={styles.featuredCard}>
       <Text style={styles.featuredName}>{item.name}</Text>
-      <Text style={styles.featuredPrice}>{item.price}</Text>
+      <Text style={styles.featuredPrice}>{item.description}</Text>
       <TouchableOpacity style={styles.featuredButton} onPress={() => handlePress(item)}>
         <Text style={styles.featuredButtonText}>Add to Cart</Text>
       </TouchableOpacity>
     </View>
   );
 
+  useFocusEffect(
+    React.useCallback(() => {
+      let isActive = true;
+      const load = async () => {
+        try {
+          const list = await api.listProducts();
+          if (isActive) setProducts(list);
+        } catch {}
+      };
+      load();
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
   return (
     <View style={styles.screen}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Home</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/add-product')}>
+          <Text style={styles.addBtnText}>+ Add Product</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Featured (Horizontal) */}
       <View style={styles.featuredSection}>
@@ -65,7 +74,7 @@ const HomeScreen = () => {
           data={products}
           horizontal
           renderItem={renderHorizontalItem}
-          keyExtractor={(item) => `h-${item.name}`}
+          keyExtractor={(item) => `h-${item.id}`}
           contentContainerStyle={styles.featuredList}
           ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
           showsHorizontalScrollIndicator={false}
@@ -76,7 +85,7 @@ const HomeScreen = () => {
       <FlatList
         data={products}
         renderItem={renderItem}
-        keyExtractor={(item) => item.name}
+        keyExtractor={(item) => String(item.id)}
         numColumns={2}
         contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 10 }}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
@@ -116,12 +125,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
+  headerBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#216694ff',
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 15,
     backgroundColor: '#216694ff',
     alignItems: 'center',
+  },
+  addBtn: {
+    backgroundColor: '#11181C',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  addBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   featuredSection: {
     paddingTop: 10,

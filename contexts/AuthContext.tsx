@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { api } from '../utils/api';
 
 interface User {
   firstName: string;
@@ -24,11 +25,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUp = async (userData: User) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Setting user in AuthContext:', userData);
-      setUser(userData);
-      console.log('User set successfully');
+      const created = await api.signUp({
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+      });
+      setUser({
+        firstName: created.firstName,
+        lastName: created.lastName,
+        email: created.email,
+      });
     } catch (error) {
       throw error;
     } finally {

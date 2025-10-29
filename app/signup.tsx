@@ -77,9 +77,10 @@ const SignUpScreen = () => {
       console.log('User signed up successfully, redirecting...');
       // Redirect to home screen immediately
       router.replace('/(tabs)');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign up error:', error);
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      const message = error?.message || 'Failed to create account. Please try again.';
+      Alert.alert('Error', message);
     } finally {
       setIsLoading(false);
     }
