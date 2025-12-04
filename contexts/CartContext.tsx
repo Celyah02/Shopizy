@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { sendCartNotification } from '../utils/notifications';
 
 type Product = {
   name: string;
@@ -23,6 +24,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addToCart = (product: Product) => {
     setCart(prevCart => [...prevCart, product]);
+    sendCartNotification(product.name);
   };
 
   const clearCart = () => {
