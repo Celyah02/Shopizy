@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { api } from '../utils/api';
+import { notifyProductAdded } from '../utils/notifications'; // 👈 import notifications
 
 const AddProductScreen = () => {
   const router = useRouter();
@@ -13,9 +14,18 @@ const AddProductScreen = () => {
     if (!name.trim() || !description.trim()) {
       return Alert.alert('Error', 'Please enter name and description');
     }
+
     setIsSubmitting(true);
+
     try {
-      await api.createProduct({ name: name.trim(), description: description.trim() });
+      await api.createProduct({
+        name: name.trim(),
+        description: description.trim(),
+      });
+
+      // 🔔 Trigger local push notification
+      await notifyProductAdded(name.trim());
+
       Alert.alert('Success', 'Product added');
       router.back();
     } catch (e: any) {
@@ -28,12 +38,14 @@ const AddProductScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Add Product</Text>
+
       <TextInput
         style={styles.input}
         placeholder="Product name"
         value={name}
         onChangeText={setName}
       />
+
       <TextInput
         style={[styles.input, styles.textArea]}
         placeholder="Product description"
@@ -42,8 +54,15 @@ const AddProductScreen = () => {
         multiline
         numberOfLines={4}
       />
-      <TouchableOpacity style={styles.button} onPress={onSubmit} disabled={isSubmitting}>
-        <Text style={styles.buttonText}>{isSubmitting ? 'Submitting...' : 'Add Product'}</Text>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={onSubmit}
+        disabled={isSubmitting}
+      >
+        <Text style={styles.buttonText}>
+          {isSubmitting ? 'Submitting...' : 'Add Product'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -90,5 +109,3 @@ const styles = StyleSheet.create({
 });
 
 export default AddProductScreen;
-
-
